@@ -1,9 +1,11 @@
-import Login from "./firebaseAuthPOC/Login";
+// import Login from "./firebaseAuthPOC/Login";
+import Todo from "./useEffectExample/todo";
 function App() {
   return (
     <>
     <h1>Learning Firebase</h1>
-    <Login></Login>
+    {/* <Login></Login> */}
+    <Todo></Todo>
     </>
   );
 }
