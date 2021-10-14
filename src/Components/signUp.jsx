@@ -1,7 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from "../Context/AuthProvider";
-import { storage, database } from "../firebaseAuthPOC/firebase";
-function Signup() {
+import { database, storage } from "../firebaseAuthPOC/firebase";
+function Signup(props) {
     let [email, setEmail] = useState("");
     let [password, setPassword] = useState("");
     const [fullName, setfullName] = useState('');
@@ -9,7 +9,6 @@ function Signup() {
     let [error, setError] = useState("");
     const [file, setFile] = useState(null);
     let { genericSignup, currentUser } = useContext(AuthContext);
-
     const handleEmail = (e) => {
         setEmail(e.target.value);
     }
@@ -24,9 +23,16 @@ function Signup() {
         let file = e?.target?.files[0];
         if (file != null)
             setFile(file);
-        // console.log(file)
+
     }
-    const handleSignup = () => {
+    useEffect(() => {
+        if (currentUser) {
+            // send to feed page
+            // loggedIN 
+            props.history.push('/feed');
+        }
+    });
+    const handleSignup = async () => {
         try {
             setError("");
             setLoginLoader(true);
@@ -34,14 +40,15 @@ function Signup() {
             let userCredential = await genericSignup(email, password);
             let uid = userCredential.user.uid;
             // uid 
-            console.log(uid);
-            // 
-            // user folder -> uid name file store
+            console.log("user signedUp with uid ", uid);
+            // // 
+            // // user folder -> uid name file store
             const uploadListener = storage.ref("/users/" + uid).put(file);
             uploadListener.on("state_changed", onprogress, onerror, onsucess);
             function onprogress(snapshot) {
-                var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log(progress)
+                let progress = (snapshot.bytesTransferred / snapshot.totalBytes)
+                    * 100;
+                console.log(progress);
             }
             function onerror(err) {
                 console.log(err);
@@ -49,13 +56,17 @@ function Signup() {
             async function onsucess() {
                 // /url 
                 let downloadUrl = await uploadListener.snapshot.ref.getDownloadURL();
-                //3 . user create firestore 
+                console.log(downloadUrl);
+                // user details add firestore
                 database.users.doc(uid).set({
                     email: email,
-                    userId: uid,
                     fullName: fullName,
-                    profileUrl: downloadUrl
+                    profileUrl: downloadUrl,
+                    reels: [],
+                    likes: [],
+                    comments: []
                 })
+                //    user details firestore
             }
         } catch (err) {
 
@@ -91,12 +102,10 @@ function Signup() {
                 />
             </div>
             <div>
-                <input type="button" >
-                    SIGNUP
+                <input type="button" onClick={handleSignup} value="SIGNUP">
+
                 </input>
             </div>
-
-
         </div>
     )
 }
